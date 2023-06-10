@@ -1,0 +1,299 @@
+---
+output:
+  pdf_document: default
+---
+# STAR EXPLORATION
+
+## Importing Data and Recoding Categorical Variables into Nummeric
+
+### Recoding kinder into new column
+
+```{r}
+library(tidyverse)
+
+star <- read_csv("STAR.csv")
+
+star <- star %>% mutate(classtype=recode(classtype,
+'1'="small",
+'2'="regular",
+'3'='regular with aid'))
+
+print(star)
+```
+
+### Recoding race in same column
+
+```{r}
+star <- read_csv("STAR.csv")
+
+star <- star %>% mutate(race=recode(race,
+'1'="White",
+'2'="Black",
+'3'='Hispanic',
+'4'='Other',
+'5'='Other',
+'6'='Other'))
+
+print(star, n = 20)
+```
+
+## Difference in Means between Small and Regular Size Classes
+
+### Filter all students in small classes
+
+```{r}
+small <- star[star$classtype == "1",]
+
+print(small, n = 20)
+```
+
+### Find the means for math and reading test scores of small classes
+
+```{r}
+small_math_mean <- mean(small$g4math, na.rm = TRUE)
+
+print(paste("small_math_mean:", small_math_mean))
+
+small_reading_mean <- mean(small$g4reading, na.rm = TRUE)
+
+print(paste("small_reading_mean:", small_reading_mean))
+```
+
+### Filter all students in regular sized classes
+```{r}
+regular <- star[star$classtype == "2",]
+
+print(regular, n = 20)
+```
+
+### Find the means for math and reading test scores of regular sized classes
+
+```{r}
+regular_math_mean <- mean(regular$g4math, na.rm = TRUE)
+
+print(paste("regular_math_mean:", regular_math_mean))
+
+regular_reading_mean <- mean(regular$g4reading, na.rm = TRUE)
+
+print(paste("regular_reading_mean:", regular_reading_mean))
+```
+
+### Find the difference in means for math and reading tests scores between small and regular sized classes
+
+```{r}
+dif_math <- small_math_mean - regular_math_mean
+
+print(paste("dif_math:", dif_math))
+
+dif_reading <- small_reading_mean - regular_reading_mean
+
+print(paste("dif_reading:", dif_reading))
+```
+
+### Find standard deviation of math and reading scores
+```{r}
+sd_math <- sd(star$g4math, na.rm = TRUE)
+
+print(paste("sd_math:", sd_math))
+
+sd_reading <- sd(star$g4reading, na.rm = TRUE)
+
+print(paste("sd_reading:", sd_reading))
+```
+
+#### Considering the standard deviations of test scores for both math and reading are above 40, the difference in the mean test scores between small and regular classes for both math and reading doesn't seem significant enough to attribute any real difference between the two class sizes. 
+
+## Quantile Treatment Effect Analysis
+
+### Find high and low score for small classes
+
+```{r}
+high_low_small_reading <- quantile(small$g4reading, probs=c(0.33,0.66), na.rm = TRUE)
+
+print(high_low_small_reading)
+
+high_low_small_math <- quantile(small$g4math, probs=c(0.33,0.66), na.rm = TRUE)
+
+print(high_low_small_math)
+```
+
+### Find high and low score for regular classes
+
+```{r}
+high_low_regular_reading <- quantile(small$g4reading, probs=c(0.33,0.66), na.rm = TRUE)
+
+print(high_low_regular_reading)
+
+high_low_regular_math <- quantile(small$g4math, probs=c(0.33,0.66), na.rm = TRUE)
+
+print(high_low_regular_math)
+```
+
+## Difference in Reading & Math Scores between Minority and White Stuedents in Different Class Sizes
+
+### Find average reading and math test scores for white students in small classes
+
+```{r}
+white_small <- small[small$race == "White",]
+
+white_small_reading_mean <- mean(white_small$g4reading, na.rm = TRUE)
+
+white_small_math_mean <- mean(white_small$g4math, na.rm = TRUE)
+
+print(paste("white_small_reading_mean:", white_small_reading_mean))
+print(paste("white_small_math_mean:", white_small_math_mean))
+```
+
+### Find average reading and math test scores for minority students in small classes
+
+```{r}
+minority_small <- small[small$race %in% c("Black","Hispanic"),]
+
+minority_small_reading_mean <- mean(minority_small$g4reading, na.rm = TRUE)
+
+minority_small_math_mean <- mean(minority_small$g4math, na.rm = TRUE)
+
+print(paste("minority_small_reading_mean:", minority_small_reading_mean))
+print(paste("minority_small_math_mean:",minority_small_math_mean))
+```
+
+### Find average reading and math test scores for white students in regular classes
+
+```{r}
+white_regular <- regular[regular$race == "White",]
+
+white_regular_reading_mean <- mean(white_regular$g4reading, na.rm = TRUE)
+
+white_regular_math_mean <- mean(white_regular$g4math, na.rm = TRUE)
+
+print(paste("white_regular_reading_mean:", white_regular_reading_mean))
+print(paste("white_regular_math_mean:", white_regular_math_mean))
+```
+
+### Find average reading and math test scores for minority students in regular classes
+
+```{r}
+minority_regular <- regular[regular$race %in% c("Black","Hispanic"),]
+
+minority_regular_reading_mean <- mean(minority_regular$g4reading, na.rm = TRUE)
+
+minority_regular_math_mean <- mean(minority_regular$g4math, na.rm = TRUE)
+print(paste("minority_regular_reading_mean:", minority_regular_reading_mean))
+print(paste("minority_regular_math_mean:", minority_regular_math_mean))
+```
+
+### Find difference between white and minority students in small and regular classes
+
+```{r}
+dif_means_reading_race_small <- white_small_reading_mean - minority_small_reading_mean
+
+dif_means_math_race_small <- white_small_math_mean - minority_small_math_mean
+
+dif_means_reading_race_regular <- white_regular_reading_mean - minority_regular_reading_mean
+
+dif_means_math_race_regular <- white_regular_math_mean - minority_regular_math_mean
+``` 
+
+```{r}
+variables <- c("dif_means_reading_race_small", "dif_means_math_race_small", "dif_means_reading_race_regular", "dif_means_math_race_regular")
+values <- c(dif_means_reading_race_small, dif_means_math_race_small, dif_means_reading_race_regular, dif_means_math_race_regular)
+
+matrix_data <- matrix(c(variables, values), ncol = 4, byrow = TRUE)
+print(matrix_data)
+```
+
+#### For small classes, there seems to be a noticeable difference between white and minority students in all class sizes and subjects (with white students having higher test scores). Taking into account the standard deviation of the test scores, these differnces are still a portion of the standard deviations. However, the differences are much more than the differences between class sizes. In regards to race, the class sizes don't significantly change the difference between test scores between white and minority students.
+
+## Graduation Rates Across Different Class Sizes
+
+### Comparing high schol graduation rates across students in different class types
+
+```{r}
+grad_rate_small <- mean(small$hsgrad, na.rm =TRUE)
+
+grad_rate_regular <- mean(regular$hsgrad, na.rm =TRUE)
+
+regular_w_aid <- star[star$classtype == '3',]
+
+grad_rate_regular_w_aid <- mean(regular_w_aid$hsgrad, na.rm =TRUE)
+
+print(paste("grad_rate_regular_w_aid:", grad_rate_regular_w_aid))
+```
+
+#### The graduation rates beween the different classtypes are all relatively equal, suggesting there is no significant difference in graduation rate due to classtype.
+
+### Graduation Rates based on number of years spent in small classes
+
+```{r}
+zero_year <- star[star$yearssmall == '0',]
+
+one_year <- star[star$yearssmall == '1',]
+
+two_year <- star[star$yearssmall == '2',]
+
+three_year <- star[star$yearssmall == '3',]
+
+four_year <- star[star$yearssmall == '4',]
+
+grad_rate_zero_year <- mean(zero_year$hsgrad, na.rm = TRUE)
+
+grad_rate_one_year <- mean(one_year$hsgrad, na.rm = TRUE)
+
+grad_rate_two_year <- mean(two_year$hsgrad, na.rm = TRUE)
+
+grad_rate_three_year <- mean(three_year$hsgrad, na.rm = TRUE)
+
+grad_rate_four_year <- mean(four_year$hsgrad, na.rm = TRUE)
+```
+
+```{r}
+variables <- c("grad_rate_zero_year", "grad_rate_one_year", "grad_rate_two_year" , "grad_rate_three_year", "grad_rate_four_year")
+values <- c(grad_rate_zero_year, grad_rate_one_year, grad_rate_two_year, grad_rate_three_year, grad_rate_four_year)
+
+matrix_data <- matrix(c(variables, values), ncol = 5, byrow = TRUE)
+print(matrix_data)
+```
+
+#### While the graduation rates for spending zero to three years in small classes are all relatively similar (with one year in small classes having the lowest graduation rate), spending four years in small classes seems to have a significant increase in graduation rates, suggesting small classes may be better if students spend the maximum amount (4 years) in them. 
+
+### Graduation Rates among white and minority students in small classes
+
+```{r}
+grad_rate_white_small <- mean(white_small$hsgrad, na.rm = TRUE)
+
+grad_rate_minority_small <- mean(minority_small$hsgrad, na.rm = TRUE)
+
+dif_grad_rate_small <- grad_rate_white_small - grad_rate_minority_small
+
+print(paste("dif_grad_rate_small:", dif_grad_rate_small))
+```
+
+### Graduation Rates among white and minority students in regular classes 
+
+```{r}
+grad_rate_white_regular <- mean(white_regular$hsgrad, na.rm = TRUE)
+
+grad_rate_minority_regular <- mean(minority_regular$hsgrad, na.rm = TRUE)
+
+dif_grad_rate_regular <- grad_rate_white_regular - grad_rate_minority_regular
+
+print(paste("dif_grad_rate_regular:" ,dif_grad_rate_regular))
+```
+
+### Graduation Rates among white and minority students in regular classes with aids
+
+```{r}
+white_regular_w_aid <- regular_w_aid[regular_w_aid$race == "White",]
+
+minority_regular_w_aid <- regular_w_aid[regular_w_aid$race %in% c("Black","Hispanic"),]
+
+grad_rate_white_regular_w_aid <- mean(white_regular_w_aid$hsgrad, na.rm = TRUE)
+
+grad_rate_minority_regular_w_aid <- mean(minority_regular_w_aid$hsgrad, na.rm = TRUE)
+
+dif_grad_rate_regular_w_aid <- grad_rate_white_regular_w_aid - grad_rate_minority_regular_w_aid
+
+print(paste("dif_grad_rate_regular_w_aid:",dif_grad_rate_regular_w_aid))
+```
+
+#### While the regular classtype had the lowest difference in graduation rates between white and minority students, all the difference in graduation rates for the different classtypes were fairly close in value, suggesting the STAR program has not significantly reduced the racial gap between white and minority student's graduation rates. Small classtypes have a higher difference in mean graduation rates than regular sized classes, suggesting a lower student to teacher ratio doesn't mean a higher graduation rate. Moreover, a regular sized class with an aid, which should have the lowest student to teach ratio, has the highest difference in mean graduation rates, further suggesting the aforementioned. 
